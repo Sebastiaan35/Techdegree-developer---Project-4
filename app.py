@@ -147,7 +147,7 @@ def add_entry(prod_dict = None):
               f"at a price of {prod_dict['product_price']} cents.\n")
     else:
         ##product is newer or has same date_updated
-        if prod_dict['date_updated'] >= pr_ex:
+        if prod_dict['date_updated'] >= pr_ex and user or prod_dict['date_updated'] > pr_ex:
             delete_product(prod_dict['product_name'])
             Product.create(**prod_dict)
             if user:
