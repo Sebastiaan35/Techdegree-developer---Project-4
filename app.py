@@ -3,10 +3,17 @@
 
 import csv, sys, os, time
 
-from peewee import *
 from datetime import date, datetime
-from collections import OrderedDict
+
 from playhouse.shortcuts import model_to_dict
+from peewee import (
+    Model,
+    AutoField,
+    TextField,
+    IntegerField,
+    DateTimeField,
+    SqliteDatabase)
+
 
 db = SqliteDatabase('inventory.db')
 
@@ -38,6 +45,7 @@ def read_from_CSV():
 
 def backup_CSV():
     """Create a backup of the CSV file"""
+    clear()
     try:
         with open('a.csv', mode='w', newline='') as csv_file:
             fieldnames = ['product_id', 'product_name', 'product_quantity', 'product_price', 'date_updated']
@@ -53,40 +61,56 @@ def backup_CSV():
         clear()
         print("\nA file named 'a.csv' is currently in use. Please close it and try again.\n")
 
-  
-def get_input(prompt, numeric=False):
+#I used Daniel Goldberg's simple way for checking if a string
+# can be classified as a float.
+#https://stackoverflow.com/questions/354038/how-do-i-check-if-a-string-is-a-number-float
+def is_number(s):
+    """Test if string is number"""
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+def get_input(prompt):
     """Get valid user input"""
     UserInputOK = False
     while not UserInputOK:
         Inputy = input(prompt)
-        if numeric:
-            if not Inputy.isalpha() and len(Inputy) != 0:
+        if len(Inputy) == 0:
+            print("The input cannot be empty.")
+        elif 'quantity' in prompt or 'product ID' in prompt:
+            if Inputy.isnumeric():
                 UserInputOK = True
             else:
-                print("The input cannot be empty and should be a number.")
-        elif len(Inputy) != 0:
-            UserInputOK = True
+                print("Please use a (whole) number to desscribe the quantity.")
+        elif 'price' in prompt:
+            #Any character will be allowed in front of the quantification of the price
+            if is_number(Inputy) or (len(Inputy) > 1 and is_number(Inputy[1:])):
+                UserInputOK = True
+            else:
+                print("The price should be a number and may only be preceded "
+                      "by a single character to indicate the currency.")
         else:
-            print("The input cannot be empty")
+            UserInputOK = True
     return str(Inputy)
 
-def add_entry(prod_dict={}):
+def add_entry(prod_dict = None):
     """Add an entry to database"""
     #If no info provided then store product info from user in dictionary
     #(Else the provided dictioinary is used)
     user = False
-    if prod_dict == {}:
+    if prod_dict == None:
         user = True
-        print("True")
+        prod_dict = {}
+        clear()
         prod_dict['product_name'] = get_input("\nPlease, input the product name: ")
-        prod_dict['product_quantity'] = get_input("Please, input the quantity: ", True)
+        prod_dict['product_quantity'] = get_input("Please, input the quantity: ")
         prod_dict['product_price'] = get_input("Please, input the price: ")
         prod_dict['date_updated'] = str(datetime.strftime(date.today(),"%m.%d.%Y"))
 
     #Clean up the data (Standardised data is assumed.
         #Alternatively various exceptions should be caught here.)
-    for cat, val in prod_dict.items():
-        print(cat,val)
     for cat, val in prod_dict.items():
         if cat == 'product_price':
             #if the first character is not a number and the price is at least 2 characters long
@@ -113,6 +137,7 @@ def add_entry(prod_dict={}):
 
     pr_ex = product_exists(prod_dict['product_name'])
     #Add data from dictionary to database if:
+
     if not pr_ex:
         ##product does not exist
         Product.create(**prod_dict)
@@ -129,23 +154,14 @@ def add_entry(prod_dict={}):
                 print(f"\nYou just updated a product in the database:\n"
                   f"{prod_dict['product_quantity']} {prod_dict['product_name']}(s) "
                   f"at a price of {prod_dict['product_price']} cents.\n")
-    print(63*'#')
-    for cat, val in prod_dict.items():
-        print(cat,val)
-    print(63*'#')
-    prod_dict = {}
-    print(63*'#')
-    for cat, val in prod_dict.items():
-        print(cat,val)
-    print(63*'#')
 
 def view_products():
-    """View previous entries."""
+    """View previous entries"""
+    clear()
     products = Product.select().order_by(Product.date_updated.desc())
-
     product_not_found = True
     while product_not_found:
-        search_query = int(get_input("\nPlease, input a product ID: ", True))
+        search_query = int(get_input("\nPlease, input a product ID: "))
         for product in products:
             if search_query == product.product_id:
                 print(f"""\nID: {product.product_id}, Updated: {datetime.strftime(product.date_updated,"%d.%m.%Y")}, """
@@ -173,22 +189,21 @@ def product_exists(product_name):
 def clear():
     """Clear screen"""
     #This function was taken from a TeamTreehouse course
-    #os.system('cls' if os.name == 'nt' else 'clear')
-    pass
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 def menu_loop():
     """Show the menu"""
     #This function was taken from a TeamTreehouse course: Making a diary app
     choice = None
 
-    menu = OrderedDict([
-    ('A', add_entry),
-    ('V', view_products),
-    ('B', backup_CSV),
-    ])
-    
+    menu = {
+    'A': add_entry,
+    'V': view_products,
+    'B': backup_CSV,
+    }
+
+    clear()
     while choice != 'Q':
-        clear()
         print("Enter 'q' to quit.")
         for key, value in menu.items():
             print('{}) {}'.format(key, value.__doc__))
