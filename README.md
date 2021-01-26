@@ -4,6 +4,18 @@ Entry for preliminary review
 Developed by: Sebastiaan van Vugt
 Date: 26.Jan.2021
 
+Summary
+-Automatically reads data from inventory.csv file into Sqlite database
+-UI:
+ *A: Option to add a new product
+ *V: Option to view a product
+ *B: Option to backup the database to a.csv file
+
+Features:
+-Automatic interpretation of csv dates to datetime values
+- Auto replace older entries of the same product with newer ones
+- Protection against bad input
+
 
 Copy of instrunctions:
 https://teamtreehouse.com/projects/a-store-inventory#instructions
