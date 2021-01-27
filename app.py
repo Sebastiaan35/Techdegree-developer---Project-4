@@ -193,7 +193,6 @@ def clear():
 
 def menu_loop():
     """Show the menu"""
-    #This function was taken from a TeamTreehouse course: Making a diary app
     choice = None
 
     menu = {
