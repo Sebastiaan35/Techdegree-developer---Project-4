@@ -1,6 +1,6 @@
 This is Project 4 - A store inventory - of the Teamtreehouse developer techdegree
 
-Entry for preliminary review
+Final entry for review
 Developed by: Sebastiaan van Vugt
 Date: 26.Jan.2021
 
